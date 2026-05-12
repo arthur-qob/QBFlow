@@ -1,0 +1,266 @@
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<style>
+			@page {
+				margin: 15mm 12mm;
+			}
+
+			*,
+			*::before,
+			*::after {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				font-family: Helvetica, sans-serif;
+				font-size: 13px;
+				line-height: 1.5;
+				color: #222;
+			}
+
+			.page {
+				padding: 0;
+			}
+
+			/* Header */
+			.company-info {
+				display: flex;
+				flex-direction: row;
+				justify-content: space-between;
+				align-items: flex-start;
+				margin-bottom: 40px;
+			}
+
+			.company-details p {
+				line-height: 1.7;
+			}
+
+			.company-logo {
+				width: 120px;
+				height: auto;
+			}
+
+			/* Doc title */
+			.doc-title {
+				font-size: 32px;
+				font-weight: 400;
+				color: #333;
+				margin-bottom: 24px;
+			}
+
+			/* Info grid */
+			.info-grid {
+				display: flex;
+				flex-direction: row;
+				gap: 24px;
+				margin-bottom: 24px;
+			}
+
+			.info-grid > div {
+				flex: 1;
+			}
+
+			.info-grid p {
+				line-height: 1.6;
+			}
+
+			.label {
+				font-weight: 700;
+			}
+
+			/* Divider */
+			hr.divider {
+				border: none;
+				border-top: 1px solid #ccc;
+				margin-bottom: 16px;
+			}
+
+			/* Shipping summary */
+			.shipping-summary {
+				display: flex;
+				flex-direction: row;
+				justify-content: space-between;
+				margin-bottom: 24px;
+			}
+
+			.shipping-summary p {
+				line-height: 1.7;
+			}
+
+			/* Items table */
+			.items-table {
+				width: 100%;
+				border-collapse: collapse;
+			}
+
+			thead {
+				display: table-header-group;
+			}
+
+			.items-table thead tr {
+				background-color: #d9dce6;
+			}
+
+			.items-table th,
+			.items-table td {
+				vertical-align: middle;
+				text-align: center;
+			}
+
+			.items-table th {
+				padding: 10px 12px;
+				font-weight: 600;
+				font-size: 12px;
+				color: #4a5080;
+				letter-spacing: 0.03em;
+			}
+
+			.items-table th:first-child,
+			.items-table td:first-child {
+				text-align: left;
+			}
+
+			.items-table th:last-child,
+			.items-table td:last-child {
+				text-align: right;
+			}
+
+			.items-table td {
+				padding: 12px 12px;
+				border-bottom: 1px solid #e8e8e8;
+				white-space: pre-line;
+			}
+
+			.items-table tbody tr:last-child td {
+				border-bottom: 2px solid #aaa;
+			}
+
+			/* Footer */
+			.footer {
+				margin-top: 24px;
+				font-size: 12px;
+				color: #555;
+			}
+
+			.footer p {
+				line-height: 1.7;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="page">
+			<header class="company-info">
+				<div class="company-details">
+					<p>{{ company_name }}</p>
+					<p>{{ company_address }}</p>
+					<p>{{ company_city }}</p>
+					<p>{{ company_phone }}</p>
+					<p>{{ company_email }}</p>
+					<p>{{ company_website }}</p>
+				</div>
+				<img
+					src="{% if logo_path %}{{ logo_path }}{% else %}./image.png{% endif %}"
+					class="company-logo"
+					alt="Technicare USA LLC Logo" />
+			</header>
+
+			<h1 class="doc-title">Packing Slip</h1>
+
+			<section class="info-grid">
+				<div class="bill-to">
+					<p class="label">BILL TO</p>
+					{% for line in bill_to.split('\n') %}
+					<p>{{ line }}</p>
+					{% endfor %}
+				</div>
+				<div class="ship-to">
+					<p class="label">SHIP TO</p>
+					{% for line in ship_to.split('\n') %}
+					<p>{{ line }}</p>
+					{% endfor %}
+				</div>
+				<div class="order-info">
+					<p>
+						<span class="label">INVOICE</span>
+						&nbsp;&nbsp;{{ invoice_number }}
+					</p>
+					<p>
+						<span class="label">DATE</span>
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ invoice_date }}
+					</p>
+					{% if show_warehouse_receipt %}
+					<p>
+						<span class="label">WR N°</span>
+						&nbsp;&nbsp;{{ warehouse_receipt }}
+					</p>
+					{% endif %}
+					<p class="label">ORDER INFORMATION</p>
+					<p>Packing:</p>
+					<p style="white-space: pre-wrap;">{{ packing_info }}</p>
+					<p>Net weight: {{ net_weight }}</p>
+					<p>Gross weight: {{ gross_weight }}</p>
+				</div>
+			</section>
+
+			<hr class="divider" />
+
+			<section class="shipping-summary">
+				<div>
+					<p class="label">INCOTERM</p>
+					<p>{{ incoterm }}</p>
+				</div>
+				{% if terms %}
+				<div>
+					<p class="label">TERMS</p>
+					<p>{{ terms }}</p>
+				</div>
+				{% endif %}
+				<div>
+					<p class="label">NET WEIGHT</p>
+					<p>{{ net_weight }}</p>
+				</div>
+				<div>
+					<p class="label">GROSS WEIGHT</p>
+					<p>{{ gross_weight }}</p>
+				</div>
+			</section>
+
+			<table class="items-table">
+				<thead>
+					<tr>
+						<th>REFERENCE</th>
+						<th>LOT N°</th>
+						<th>MANUFACTURE DATE</th>
+						{% if show_net_weight %}
+						<th>UNIT NET WEIGHT (KG)</th>
+						{% endif %}
+						<th>QTY</th>
+					</tr>
+				</thead>
+
+				<tbody>
+					{% for row in rows %}
+					<tr>
+						<td>{{ row.reference }}</td>
+						<td>{{ row.lots }}</td>
+						<td>{{ row.manufacture_dates }}</td>
+						{% if show_net_weight %}
+						<td>{{ row.net_weight_per_item }}</td>
+						{% endif %}
+						<td>{{ row.qty }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+
+			<div class="footer">
+				<p>Total SKUs: {{ total_skus }}</p>
+				<p>Total Units: {{ total_units }}</p>
+			</div>
+		</div>
+	</body>
+</html>

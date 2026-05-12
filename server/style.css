@@ -1,0 +1,116 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	font-family: 'Helvetica', sans-serif;
+	font-size: 13px;
+	line-height: 1.5;
+	color: #222;
+}
+
+.page {
+	max-width: 860px;
+	margin: 0 auto;
+	padding: 40px 0px;
+}
+
+/* Header */
+header.company-info {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 40px;
+}
+
+.company-details {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.7;
+}
+
+.company-logo {
+	width: 120px;
+	height: auto;
+}
+
+/* Doc title */
+.doc-title {
+	font-size: 32px;
+	font-weight: 400;
+	color: #333;
+	margin-bottom: 24px;
+}
+
+/* Info grid: Bill To / Ship To / Order Info */
+.info-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	gap: 24px;
+	margin-bottom: 24px;
+}
+
+.info-grid p {
+	line-height: 1.6;
+}
+
+.label {
+	font-weight: 700;
+}
+
+/* Divider */
+hr.divider {
+	border: none;
+	border-top: 1px solid #ccc;
+	margin-bottom: 16px;
+}
+
+/* Shipping summary row */
+.shipping-summary {
+	display: flex;
+	flex-direction: row;
+	gap: 48px;
+	margin-bottom: 24px;
+}
+
+.shipping-summary p {
+	line-height: 1.7;
+}
+
+/* Items table */
+.items-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.items-table thead tr {
+	background-color: #d9dce6;
+}
+
+.items-table th {
+	text-align: left;
+	padding: 10px 12px;
+	font-weight: 600;
+	font-size: 12px;
+	color: #4a5080;
+	letter-spacing: 0.03em;
+}
+
+.items-table th:last-child,
+.items-table td:last-child {
+	text-align: right;
+}
+
+.items-table td {
+	padding: 12px 12px;
+	border-bottom: 1px solid #e8e8e8;
+}
+
+.items-table tbody tr:last-child td {
+	border-bottom: 2px solid #aaa;
+}

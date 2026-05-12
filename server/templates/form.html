@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0" />
+		<title>Packing Slip Generator</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family:
+					-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+					sans-serif;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 20px;
+			}
+
+			.container {
+				max-width: 900px;
+				width: 100%;
+				background: white;
+				border-radius: 8px;
+				box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+				overflow: hidden;
+			}
+
+			.header {
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				color: white;
+				padding: 30px;
+				text-align: center;
+			}
+
+			.header h1 {
+				font-size: 28px;
+				margin-bottom: 8px;
+			}
+
+			.header p {
+				opacity: 0.9;
+				font-size: 14px;
+			}
+
+			.form-container {
+				padding: 40px;
+			}
+
+			.form-section {
+				margin-bottom: 40px;
+			}
+
+			.form-section h2 {
+				font-size: 18px;
+				color: #333;
+				margin-bottom: 20px;
+				padding-bottom: 10px;
+				border-bottom: 2px solid #f0f0f0;
+			}
+
+			.form-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+				gap: 20px;
+			}
+
+			.form-group {
+				display: flex;
+				flex-direction: column;
+			}
+
+			label {
+				font-weight: 600;
+				font-size: 13px;
+				color: #555;
+				margin-bottom: 8px;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+
+			input[type='text'],
+			input[type='date'],
+			textarea {
+				padding: 12px;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				font-size: 14px;
+				font-family: inherit;
+				transition: border-color 0.2s;
+			}
+
+			input[type='text']:focus,
+			input[type='date']:focus,
+			textarea:focus {
+				outline: none;
+				border-color: #667eea;
+				box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+			}
+
+			textarea {
+				resize: vertical;
+				min-height: 80px;
+			}
+
+			.file-upload {
+				position: relative;
+				margin-bottom: 30px;
+			}
+
+			.file-upload input[type='file'] {
+				display: none;
+			}
+
+			.file-upload-label {
+				display: block;
+				padding: 20px;
+				border: 2px dashed #667eea;
+				border-radius: 4px;
+				text-align: center;
+				cursor: pointer;
+				transition: all 0.2s;
+				background: rgba(102, 126, 234, 0.05);
+			}
+
+			.file-upload-label:hover {
+				background: rgba(102, 126, 234, 0.1);
+				border-color: #764ba2;
+			}
+
+			.file-upload-label.has-file {
+				background: rgba(76, 175, 80, 0.1);
+				border-color: #4caf50;
+			}
+
+			.file-name {
+				display: none;
+				color: #4caf50;
+				font-weight: 600;
+				margin-top: 10px;
+			}
+
+			.file-name.show {
+				display: block;
+			}
+
+			.button-group {
+				display: flex;
+				gap: 12px;
+				margin-top: 40px;
+				padding-top: 20px;
+				border-top: 1px solid #f0f0f0;
+			}
+
+			button {
+				flex: 1;
+				padding: 14px 20px;
+				font-size: 14px;
+				font-weight: 600;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				transition: all 0.2s;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+
+			.btn-generate {
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				color: white;
+			}
+
+			.btn-generate:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+			}
+
+			.btn-generate:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+				transform: none;
+			}
+
+			.btn-reset {
+				background: #f5f5f5;
+				color: #666;
+				border: 1px solid #ddd;
+			}
+
+			.btn-reset:hover {
+				background: #f0f0f0;
+			}
+
+			.loading {
+				display: none;
+				text-align: center;
+				padding: 20px;
+				color: #667eea;
+			}
+
+			.spinner {
+				border: 3px solid #f0f0f0;
+				border-top: 3px solid #667eea;
+				border-radius: 50%;
+				width: 30px;
+				height: 30px;
+				animation: spin 1s linear infinite;
+				margin: 0 auto 10px;
+			}
+
+			@keyframes spin {
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+
+			.error {
+				color: #d32f2f;
+				font-size: 13px;
+				margin-top: 5px;
+			}
+
+			.error.show {
+				display: block;
+			}
+
+			.radio-group {
+				display: flex;
+				gap: 24px;
+				margin-top: 16px;
+			}
+
+			.radio-option {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				cursor: pointer;
+			}
+
+			.radio-option input[type='radio'] {
+				accent-color: #667eea;
+				width: 16px;
+				height: 16px;
+				cursor: pointer;
+			}
+
+			.radio-option span {
+				font-size: 14px;
+				color: #444;
+				cursor: pointer;
+			}
+
+			.toggle-row {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				padding: 12px 0;
+				border-bottom: 1px solid #f0f0f0;
+			}
+
+			.toggle-row:last-child {
+				border-bottom: none;
+			}
+
+			.toggle-switch {
+				position: relative;
+				width: 42px;
+				height: 24px;
+				flex-shrink: 0;
+			}
+
+			.toggle-switch input {
+				opacity: 0;
+				width: 0;
+				height: 0;
+				position: absolute;
+			}
+
+			.toggle-slider {
+				position: absolute;
+				inset: 0;
+				background: #ccc;
+				border-radius: 24px;
+				cursor: pointer;
+				transition: background 0.2s;
+			}
+
+			.toggle-slider::before {
+				content: '';
+				position: absolute;
+				width: 18px;
+				height: 18px;
+				left: 3px;
+				top: 3px;
+				background: white;
+				border-radius: 50%;
+				transition: transform 0.2s;
+			}
+
+			.toggle-switch input:checked + .toggle-slider {
+				background: #667eea;
+			}
+
+			.toggle-switch input:checked + .toggle-slider::before {
+				transform: translateX(18px);
+			}
+
+			.toggle-label {
+				font-weight: 600;
+				font-size: 13px;
+				color: #555;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+				cursor: pointer;
+			}
+
+			.toggle-extra {
+				display: none;
+				margin-top: 12px;
+				padding-left: 54px;
+			}
+
+			.toggle-extra.show {
+				display: block;
+			}
+
+			@media (max-width: 768px) {
+				.form-container {
+					padding: 20px;
+				}
+
+				.form-grid {
+					grid-template-columns: 1fr;
+				}
+
+				.header h1 {
+					font-size: 22px;
+				}
+
+				.button-group {
+					flex-direction: column-reverse;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				<h1>Packing Slip Generator</h1>
+				<p>Fill in the form below to generate your packing slip PDF</p>
+			</div>
+
+			<form
+				class="form-container"
+				id="packingForm"
+				enctype="multipart/form-data">
+				<!-- File Upload -->
+				<div class="file-upload">
+					<input
+						type="file"
+						id="excelFile"
+						name="excel_file"
+						accept=".xlsx,.xls"
+						required />
+					<label
+						for="excelFile"
+						class="file-upload-label"
+						id="fileLabel">
+						<div style="font-size: 18px; margin-bottom: 8px">
+							📄
+						</div>
+						<div>Click to upload or drag and drop</div>
+						<div
+							style="
+								font-size: 12px;
+								color: #999;
+								margin-top: 4px;
+							">
+							Excel file (.xlsx)
+						</div>
+					</label>
+					<div
+						class="file-name"
+						id="fileName"></div>
+					<div
+						class="error"
+						id="fileError"></div>
+				</div>
+
+				<!-- Logo Upload -->
+				<div class="file-upload">
+					<input
+						type="file"
+						id="logoFile"
+						name="logo_file"
+						accept="image/*" />
+					<label
+						for="logoFile"
+						class="file-upload-label"
+						id="logoLabel">
+						<div style="font-size: 18px; margin-bottom: 8px">
+							🖼️
+						</div>
+						<div>Click to upload logo or drag and drop</div>
+						<div
+							style="
+								font-size: 12px;
+								color: #999;
+								margin-top: 4px;
+							">
+							Image file (PNG, JPG, SVG)
+						</div>
+					</label>
+					<div
+						class="file-name"
+						id="logoName"></div>
+				</div>
+
+				<!-- Company Section -->
+				<div class="form-section">
+					<h2>Company Information</h2>
+					<div class="form-grid">
+						<div class="form-group">
+							<label for="company_name">Company Name</label>
+							<input
+								type="text"
+								id="company_name"
+								name="company_name"
+								value="TECHNICARE USA LLC"
+								required />
+						</div>
+						<div class="form-group">
+							<label for="company_address">Address</label>
+							<input
+								type="text"
+								id="company_address"
+								name="company_address"
+								value="2350 NW 93rd Ave"
+								required />
+						</div>
+						<div class="form-group">
+							<label for="company_city">City / State / Zip</label>
+							<input
+								type="text"
+								id="company_city"
+								name="company_city"
+								value="Doral, FL 33172 US"
+								required />
+						</div>
+						<div class="form-group">
+							<label for="company_phone">Phone</label>
+							<input
+								type="text"
+								id="company_phone"
+								name="company_phone"
+								value="+17867475565"
+								required />
+						</div>
+						<div class="form-group">
+							<label for="company_email">Email</label>
+							<input
+								type="text"
+								id="company_email"
+								name="company_email"
+								value="operations@technicareusa.com"
+								required />
+						</div>
+						<div class="form-group">
+							<label for="company_website">Website</label>
+							<input
+								type="text"
+								id="company_website"
+								name="company_website"
+								value="www.technicareusa.com"
+								required />
+						</div>
+					</div>
+				</div>
+
+				<!-- Bill To Section -->
+				<div class="form-section">
+					<h2>Bill To</h2>
+					<div class="form-grid">
+						<div
+							class="form-group"
+							style="grid-column: 1 / -1">
+							<label for="bill_to">Company Details</label>
+							<textarea
+								id="bill_to"
+								name="bill_to"
+								required>
+BCR COM E DIST DE IMPLANTES
+CIRURGICOS LTDA
+RUA PAULO BLASCHKE 270 JARDIM
+ITU
+PORTO ALEGRE
+RIO GRANDE DO SUL
+CEP 91225-230
+CNPJ: 17.958.615/0001-28</textarea
+							>
+						</div>
+					</div>
+				</div>
+
+				<!-- Ship To Section -->
+				<div class="form-section">
+					<h2>Ship To</h2>
+					<div class="form-grid">
+						<div
+							class="form-group"
+							style="grid-column: 1 / -1">
+							<label for="ship_to">Company Details</label>
+							<textarea
+								id="ship_to"
+								name="ship_to"
+								required>
+BCR COM E DIST DE IMPLANTES
+CIRURGICOS LTDA
+RUA PAULO BLASCHKE 270 JARDIM
+ITU
+PORTO ALEGRE
+RIO GRANDE DO SUL
+CEP 91225-230
+CNPJ: 17.958.615/0001-28</textarea
+							>
+						</div>
+					</div>
+				</div>
+
+				<!-- Document Info Section -->
+				<div class="form-section">
+					<h2>Document Information</h2>
+					<div class="form-grid">
+						<div class="form-group">
+							<label for="invoice_number">Invoice Number</label>
+							<input
+								type="text"
+								id="invoice_number"
+								name="invoice_number"
+								value="022-26"
+								required />
+						</div>
+						<div class="form-group">
+							<label for="invoice_date">Invoice Date</label>
+							<input
+								type="date"
+								id="invoice_date"
+								name="invoice_date"
+								required />
+						</div>
+						<div class="form-group">
+							<label for="incoterm">Incoterm</label>
+							<input
+								type="text"
+								id="incoterm"
+								name="incoterm"
+								value="CPT"
+								required />
+						</div>
+						<div class="form-group">
+							<label for="terms">Terms</label>
+							<input
+								type="text"
+								id="terms"
+								name="terms"
+								placeholder="e.g. Net 30" />
+						</div>
+						<div class="form-group">
+							<label for="packing_info">
+								Packing Information
+							</label>
+							<textarea
+								id="packing_info"
+								name="packing_info"
+								value="1 parcel | 60 x 40 x 42 cm"
+								required></textarea>
+						</div>
+					</div>
+
+					<div
+						class="form-group"
+						style="margin-top: 20px">
+						<label>Manufacture Date Format</label>
+						<div class="radio-group">
+							<label class="radio-option">
+								<input
+									type="radio"
+									name="date_format"
+									value="day_month_year"
+									checked />
+								<span>Day / Month / Year</span>
+							</label>
+							<label class="radio-option">
+								<input
+									type="radio"
+									name="date_format"
+									value="month_year" />
+								<span>Month / Year only</span>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<!-- Weight Section -->
+				<div class="form-section">
+					<h2>Weight Information</h2>
+					<div class="form-grid">
+						<div class="form-group">
+							<label for="net_weight">Net Weight</label>
+							<input
+								type="text"
+								id="net_weight"
+								name="net_weight"
+								value="9.00 kg"
+								required />
+						</div>
+						<div class="form-group">
+							<label for="gross_weight">Gross Weight</label>
+							<input
+								type="text"
+								id="gross_weight"
+								name="gross_weight"
+								value="10.60 kg"
+								required />
+						</div>
+					</div>
+				</div>
+
+				<!-- Optional Fields Section -->
+				<div class="form-section">
+					<h2>Optional Fields</h2>
+
+					<div class="toggle-row">
+						<label class="toggle-switch">
+							<input
+								type="checkbox"
+								id="show_net_weight"
+								name="show_net_weight" />
+							<span class="toggle-slider"></span>
+						</label>
+						<span
+							class="toggle-label"
+							for="show_net_weight">
+							Show NET WEIGHT column in items table
+						</span>
+					</div>
+					<div class="toggle-row">
+						<label class="toggle-switch">
+							<input
+								type="checkbox"
+								id="show_warehouse_receipt"
+								name="show_warehouse_receipt" />
+							<span class="toggle-slider"></span>
+						</label>
+						<span
+							class="toggle-label"
+							for="show_warehouse_receipt">
+							Show Warehouse Receipt Number
+						</span>
+					</div>
+					<div
+						class="toggle-extra"
+						id="warehouse_receipt_extra">
+						<div class="form-group">
+							<label for="warehouse_receipt">
+								Warehouse Receipt Number
+							</label>
+							<input
+								type="text"
+								id="warehouse_receipt"
+								name="warehouse_receipt"
+								placeholder="e.g. WR-2026-001" />
+						</div>
+					</div>
+				</div>
+
+				<!-- Buttons -->
+				<div class="button-group">
+					<button
+						type="reset"
+						class="btn-reset">
+						Reset Form
+					</button>
+					<button
+						type="submit"
+						class="btn-generate"
+						id="submitBtn">
+						Generate Packing Slip
+					</button>
+				</div>
+
+				<div
+					class="loading"
+					id="loading">
+					<div class="spinner"></div>
+					<p>Generating packing slip...</p>
+				</div>
+			</form>
+		</div>
+
+		<script>
+			// Warehouse receipt toggle
+			document
+				.getElementById('show_warehouse_receipt')
+				.addEventListener('change', function () {
+					const extra = document.getElementById(
+						'warehouse_receipt_extra'
+					)
+					extra.classList.toggle('show', this.checked)
+					document.getElementById('warehouse_receipt').value = ''
+				})
+
+			const form = document.getElementById('packingForm')
+			const fileInput = document.getElementById('excelFile')
+			const fileLabel = document.getElementById('fileLabel')
+			const fileName = document.getElementById('fileName')
+			const fileError = document.getElementById('fileError')
+			const logoInput = document.getElementById('logoFile')
+			const logoLabel = document.getElementById('logoLabel')
+			const logoName = document.getElementById('logoName')
+			const loading = document.getElementById('loading')
+			const submitBtn = document.getElementById('submitBtn')
+
+			// Set today's date as default
+			document.getElementById('invoice_date').valueAsDate = new Date()
+
+			// File upload handling
+			fileInput.addEventListener('change', function (e) {
+				if (this.files.length > 0) {
+					const file = this.files[0]
+					fileName.textContent = '✓ ' + file.name
+					fileName.classList.add('show')
+					fileLabel.classList.add('has-file')
+					fileError.textContent = ''
+					fileError.classList.remove('show')
+				}
+			})
+
+			// Logo upload handling
+			logoInput.addEventListener('change', function (e) {
+				if (this.files.length > 0) {
+					const file = this.files[0]
+					logoName.textContent = '✓ ' + file.name
+					logoName.classList.add('show')
+					logoLabel.classList.add('has-file')
+				}
+			})
+
+			// Drag and drop
+			fileLabel.addEventListener('dragover', function (e) {
+				e.preventDefault()
+				this.style.borderColor = '#764ba2'
+				this.style.background = 'rgba(102, 126, 234, 0.15)'
+			})
+
+			fileLabel.addEventListener('dragleave', function (e) {
+				e.preventDefault()
+				this.style.borderColor = '#667eea'
+				this.style.background = 'rgba(102, 126, 234, 0.05)'
+			})
+
+			fileLabel.addEventListener('drop', function (e) {
+				e.preventDefault()
+				this.style.borderColor = '#667eea'
+				this.style.background = 'rgba(102, 126, 234, 0.05)'
+				const files = e.dataTransfer.files
+				if (files.length > 0) {
+					fileInput.files = files
+					const event = new Event('change', { bubbles: true })
+					fileInput.dispatchEvent(event)
+				}
+			})
+
+			// Logo drag and drop
+			logoLabel.addEventListener('dragover', function (e) {
+				e.preventDefault()
+				this.style.borderColor = '#764ba2'
+				this.style.background = 'rgba(102, 126, 234, 0.15)'
+			})
+
+			logoLabel.addEventListener('dragleave', function (e) {
+				e.preventDefault()
+				this.style.borderColor = '#667eea'
+				this.style.background = 'rgba(102, 126, 234, 0.05)'
+			})
+
+			logoLabel.addEventListener('drop', function (e) {
+				e.preventDefault()
+				this.style.borderColor = '#667eea'
+				this.style.background = 'rgba(102, 126, 234, 0.05)'
+				const files = e.dataTransfer.files
+				if (files.length > 0) {
+					logoInput.files = files
+					const event = new Event('change', { bubbles: true })
+					logoInput.dispatchEvent(event)
+				}
+			})
+
+			// Form submission
+			form.addEventListener('submit', async function (e) {
+				e.preventDefault()
+
+				if (!fileInput.files || fileInput.files.length === 0) {
+					fileError.textContent = 'Please select an Excel file'
+					fileError.classList.add('show')
+					return
+				}
+
+				const formData = new FormData(form)
+				submitBtn.disabled = true
+				loading.style.display = 'block'
+
+				try {
+					const response = await fetch('/generate', {
+						method: 'POST',
+						body: formData
+					})
+
+					if (!response.ok) {
+						const error = await response.text()
+						throw new Error(error)
+					}
+
+					// Get the blob and download
+					const blob = await response.blob()
+					const url = window.URL.createObjectURL(blob)
+					const a = document.createElement('a')
+					a.href = url
+					a.download = `Packing Slip ${formData.get('invoice_number')}.pdf`
+					document.body.appendChild(a)
+					a.click()
+					window.URL.revokeObjectURL(url)
+					a.remove()
+				} catch (error) {
+					fileError.textContent = 'Error: ' + error.message
+					fileError.classList.add('show')
+				} finally {
+					submitBtn.disabled = false
+					loading.style.display = 'none'
+				}
+			})
+		</script>
+	</body>
+</html>
