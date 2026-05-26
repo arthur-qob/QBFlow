@@ -5,6 +5,8 @@ from datetime import datetime
 from flask import Flask, request, send_file, jsonify, render_template
 from load_excel import load_excel
 from prep_data import prepare_data
+from load_invoice_excel import load_invoice_excel
+from prep_invoice_data import prepare_invoice_data
 from render_html import render_html
 from generate import generate_pdf
 
@@ -89,6 +91,75 @@ def generate():
         io.BytesIO(pdf_bytes),
         mimetype="application/pdf",
         download_name="packing_slip.pdf",
+    )
+
+
+@app.route("/invoice", methods=["GET"])
+def invoice_form():
+    return render_template("invoice_form.html")
+
+
+@app.route("/generate-invoice", methods=["POST"])
+def generate_invoice():
+    # Validate file
+    if "excel_file" not in request.files:
+        return "No file provided", 400
+
+    file = request.files["excel_file"]
+    if not file.filename.lower().endswith((".xlsx", ".xls")):
+        return "File must be an Excel file (.xlsx or .xls)", 400
+
+    # Load and prepare data
+    df = load_invoice_excel(file)
+    shipping = float(request.form.get("shipping_cost", 0) or 0)
+    data = prepare_invoice_data(df, shipping=shipping)
+
+    # Handle logo upload
+    logo_path = None
+    if "logo_file" in request.files:
+        logo_file = request.files["logo_file"]
+        if logo_file and logo_file.filename:
+            temp_dir = tempfile.gettempdir()
+            logo_filename = f"invoice_logo_{os.urandom(4).hex()}{os.path.splitext(logo_file.filename)[1]}"
+            logo_path = os.path.join(temp_dir, logo_filename)
+            logo_file.save(logo_path)
+
+    # Merge form fields
+    data.update({
+        "company_name": request.form.get("company_name", "TECHNICARE USA LLC"),
+        "company_address": request.form.get("company_address", "2350 NW 93rd Ave"),
+        "company_city": request.form.get("company_city", "Doral, FL 33172 US"),
+        "company_phone": request.form.get("company_phone", "+17867475565"),
+        "company_email": request.form.get("company_email", "operations@technicareusa.com"),
+        "company_website": request.form.get("company_website", "www.technicareusa.com"),
+        "bill_to": request.form.get("bill_to", ""),
+        "ship_to": request.form.get("ship_to", ""),
+        "invoice_number": request.form.get("invoice_number", ""),
+        "invoice_date": _format_invoice_date(request.form.get("invoice_date", "")),
+        "due_date": _format_invoice_date(request.form.get("due_date", "")),
+        "terms": request.form.get("terms", ""),
+        "incoterm": request.form.get("incoterm", "CPT"),
+        "currency": request.form.get("currency", "USD"),
+        "payment_info": request.form.get("payment_info", ""),
+        "logo_path": logo_path,
+    })
+
+    # Render HTML and generate PDF
+    html = render_html(data, template_name="invoice.html")
+    pdf_bytes = generate_pdf(html)
+
+    # Clean up temp logo
+    if logo_path and os.path.exists(logo_path):
+        try:
+            os.remove(logo_path)
+        except Exception:
+            pass
+
+    invoice_number = data["invoice_number"]
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        download_name=f"Invoice {invoice_number}.pdf",
     )
 
 

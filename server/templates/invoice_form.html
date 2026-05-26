@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Invoice Generator</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 20px;
+			}
+
+			.container {
+				max-width: 900px;
+				width: 100%;
+				background: white;
+				border-radius: 8px;
+				box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+				overflow: hidden;
+			}
+
+			.header {
+				background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+				color: white;
+				padding: 30px;
+				text-align: center;
+			}
+
+			.header h1 {
+				font-size: 28px;
+				margin-bottom: 8px;
+			}
+
+			.header p {
+				opacity: 0.9;
+				font-size: 14px;
+			}
+
+			.nav-link {
+				text-align: right;
+				padding: 10px 40px 0;
+				font-size: 13px;
+			}
+
+			.nav-link a {
+				color: #11998e;
+				text-decoration: none;
+				font-weight: 600;
+			}
+
+			.nav-link a:hover {
+				text-decoration: underline;
+			}
+
+			.form-container {
+				padding: 40px;
+			}
+
+			.form-section {
+				margin-bottom: 40px;
+			}
+
+			.form-section h2 {
+				font-size: 18px;
+				color: #333;
+				margin-bottom: 20px;
+				padding-bottom: 10px;
+				border-bottom: 2px solid #f0f0f0;
+			}
+
+			.form-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+				gap: 20px;
+			}
+
+			.form-group {
+				display: flex;
+				flex-direction: column;
+			}
+
+			label {
+				font-weight: 600;
+				font-size: 13px;
+				color: #555;
+				margin-bottom: 8px;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+
+			input[type='text'],
+			input[type='date'],
+			input[type='number'],
+			select,
+			textarea {
+				padding: 12px;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				font-size: 14px;
+				font-family: inherit;
+				transition: border-color 0.2s;
+			}
+
+			input[type='text']:focus,
+			input[type='date']:focus,
+			input[type='number']:focus,
+			select:focus,
+			textarea:focus {
+				outline: none;
+				border-color: #11998e;
+				box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.1);
+			}
+
+			textarea {
+				resize: vertical;
+				min-height: 80px;
+			}
+
+			.file-upload {
+				position: relative;
+				margin-bottom: 30px;
+			}
+
+			.file-upload input[type='file'] {
+				display: none;
+			}
+
+			.file-upload-label {
+				display: block;
+				padding: 20px;
+				border: 2px dashed #11998e;
+				border-radius: 4px;
+				text-align: center;
+				cursor: pointer;
+				transition: all 0.2s;
+				background: rgba(17, 153, 142, 0.05);
+			}
+
+			.file-upload-label:hover {
+				background: rgba(17, 153, 142, 0.1);
+				border-color: #38ef7d;
+			}
+
+			.file-upload-label.has-file {
+				background: rgba(76, 175, 80, 0.1);
+				border-color: #4caf50;
+			}
+
+			.file-name {
+				display: none;
+				color: #4caf50;
+				font-weight: 600;
+				margin-top: 10px;
+			}
+
+			.file-name.show {
+				display: block;
+			}
+
+			.button-group {
+				display: flex;
+				gap: 12px;
+				margin-top: 40px;
+				padding-top: 20px;
+				border-top: 1px solid #f0f0f0;
+			}
+
+			button {
+				flex: 1;
+				padding: 14px 20px;
+				font-size: 14px;
+				font-weight: 600;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				transition: all 0.2s;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+
+			.btn-generate {
+				background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+				color: white;
+			}
+
+			.btn-generate:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 10px 20px rgba(17, 153, 142, 0.3);
+			}
+
+			.btn-generate:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+				transform: none;
+			}
+
+			.btn-reset {
+				background: #f5f5f5;
+				color: #666;
+				border: 1px solid #ddd;
+			}
+
+			.btn-reset:hover {
+				background: #f0f0f0;
+			}
+
+			.loading {
+				display: none;
+				text-align: center;
+				padding: 20px;
+				color: #11998e;
+			}
+
+			.spinner {
+				border: 3px solid #f0f0f0;
+				border-top: 3px solid #11998e;
+				border-radius: 50%;
+				width: 30px;
+				height: 30px;
+				animation: spin 1s linear infinite;
+				margin: 0 auto 10px;
+			}
+
+			@keyframes spin {
+				0% { transform: rotate(0deg); }
+				100% { transform: rotate(360deg); }
+			}
+
+			.error {
+				color: #d32f2f;
+				font-size: 13px;
+				margin-top: 5px;
+				display: none;
+			}
+
+			.error.show {
+				display: block;
+			}
+
+			.hint {
+				font-size: 12px;
+				color: #999;
+				margin-top: 4px;
+			}
+
+			@media (max-width: 768px) {
+				.form-container { padding: 20px; }
+				.form-grid { grid-template-columns: 1fr; }
+				.header h1 { font-size: 22px; }
+				.button-group { flex-direction: column-reverse; }
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				<h1>Invoice Generator</h1>
+				<p>Fill in the form below to generate your invoice PDF</p>
+			</div>
+
+			<div class="nav-link">
+				<a href="/">← Switch to Packing Slip Generator</a>
+			</div>
+
+			<form class="form-container" id="invoiceForm" enctype="multipart/form-data">
+
+				<!-- Excel Upload -->
+				<div class="file-upload">
+					<input type="file" id="excelFile" name="excel_file" accept=".xlsx,.xls" required />
+					<label for="excelFile" class="file-upload-label" id="fileLabel">
+						<div style="font-size: 18px; margin-bottom: 8px">📄</div>
+						<div>Click to upload or drag and drop</div>
+						<div style="font-size: 12px; color: #999; margin-top: 4px">
+							Excel file (.xlsx) — columns: REFERENCE, DESCRIPTION, QUANTITY, UNIT PRICE
+						</div>
+					</label>
+					<div class="file-name" id="fileName"></div>
+					<div class="error" id="fileError"></div>
+				</div>
+
+				<!-- Logo Upload -->
+				<div class="file-upload">
+					<input type="file" id="logoFile" name="logo_file" accept="image/*" />
+					<label for="logoFile" class="file-upload-label" id="logoLabel">
+						<div style="font-size: 18px; margin-bottom: 8px">🖼️</div>
+						<div>Click to upload logo or drag and drop</div>
+						<div style="font-size: 12px; color: #999; margin-top: 4px">Image file (PNG, JPG, SVG)</div>
+					</label>
+					<div class="file-name" id="logoName"></div>
+				</div>
+
+				<!-- Company Information -->
+				<div class="form-section">
+					<h2>Company Information</h2>
+					<div class="form-grid">
+						<div class="form-group">
+							<label for="company_name">Company Name</label>
+							<input type="text" id="company_name" name="company_name" value="TECHNICARE USA LLC" required />
+						</div>
+						<div class="form-group">
+							<label for="company_address">Address</label>
+							<input type="text" id="company_address" name="company_address" value="2350 NW 93rd Ave" required />
+						</div>
+						<div class="form-group">
+							<label for="company_city">City / State / Zip</label>
+							<input type="text" id="company_city" name="company_city" value="Doral, FL 33172 US" required />
+						</div>
+						<div class="form-group">
+							<label for="company_phone">Phone</label>
+							<input type="text" id="company_phone" name="company_phone" value="+17867475565" required />
+						</div>
+						<div class="form-group">
+							<label for="company_email">Email</label>
+							<input type="text" id="company_email" name="company_email" value="operations@technicareusa.com" required />
+						</div>
+						<div class="form-group">
+							<label for="company_website">Website</label>
+							<input type="text" id="company_website" name="company_website" value="www.technicareusa.com" required />
+						</div>
+					</div>
+				</div>
+
+				<!-- Bill To -->
+				<div class="form-section">
+					<h2>Bill To</h2>
+					<div class="form-grid">
+						<div class="form-group" style="grid-column: 1 / -1">
+							<label for="bill_to">Company Details</label>
+							<textarea id="bill_to" name="bill_to" required></textarea>
+						</div>
+					</div>
+				</div>
+
+				<!-- Ship To -->
+				<div class="form-section">
+					<h2>Ship To</h2>
+					<div class="form-grid">
+						<div class="form-group" style="grid-column: 1 / -1">
+							<label for="ship_to">Company Details</label>
+							<textarea id="ship_to" name="ship_to" required></textarea>
+						</div>
+					</div>
+				</div>
+
+				<!-- Invoice Details -->
+				<div class="form-section">
+					<h2>Invoice Details</h2>
+					<div class="form-grid">
+						<div class="form-group">
+							<label for="invoice_number">Invoice Number</label>
+							<input type="text" id="invoice_number" name="invoice_number" placeholder="e.g. 026-26" required />
+						</div>
+						<div class="form-group">
+							<label for="invoice_date">Invoice Date</label>
+							<input type="date" id="invoice_date" name="invoice_date" required />
+						</div>
+						<div class="form-group">
+							<label for="due_date">Due Date</label>
+							<input type="date" id="due_date" name="due_date" />
+						</div>
+						<div class="form-group">
+							<label for="terms">Terms</label>
+							<input type="text" id="terms" name="terms" placeholder="e.g. Advanced, Net 30" />
+						</div>
+						<div class="form-group">
+							<label for="incoterm">Incoterm</label>
+							<input type="text" id="incoterm" name="incoterm" value="CPT" />
+						</div>
+						<div class="form-group">
+							<label for="currency">Currency</label>
+							<input type="text" id="currency" name="currency" value="USD" />
+						</div>
+					</div>
+				</div>
+
+				<!-- Amounts -->
+				<div class="form-section">
+					<h2>Amounts</h2>
+					<div class="form-grid">
+						<div class="form-group">
+							<label for="shipping_cost">Shipping Cost</label>
+							<input type="number" id="shipping_cost" name="shipping_cost" value="0" min="0" step="0.01" />
+							<span class="hint">Added to subtotal for TOTAL and BALANCE DUE</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- Payment Information -->
+				<div class="form-section">
+					<h2>Payment Information</h2>
+					<div class="form-grid">
+						<div class="form-group" style="grid-column: 1 / -1">
+							<label for="payment_info">Bank / Wire Details</label>
+							<textarea id="payment_info" name="payment_info" style="min-height: 140px">Technicare USA LLC
+Bank: Wells Fargo Bank
+For International Wire
+SWIFT-BIC Code WFBIUS6S
+Account: 8449036048
+Bank Address: 420 Montgomery St.
+San Francisco, CA 94104 USA</textarea>
+						</div>
+					</div>
+				</div>
+
+				<!-- Buttons -->
+				<div class="button-group">
+					<button type="reset" class="btn-reset">Reset Form</button>
+					<button type="submit" class="btn-generate" id="submitBtn">Generate Invoice</button>
+				</div>
+
+				<div class="loading" id="loading">
+					<div class="spinner"></div>
+					<p>Generating invoice...</p>
+				</div>
+			</form>
+		</div>
+
+		<script>
+			const form = document.getElementById('invoiceForm')
+			const fileInput = document.getElementById('excelFile')
+			const fileLabel = document.getElementById('fileLabel')
+			const fileName = document.getElementById('fileName')
+			const fileError = document.getElementById('fileError')
+			const logoInput = document.getElementById('logoFile')
+			const logoLabel = document.getElementById('logoLabel')
+			const logoName = document.getElementById('logoName')
+			const loading = document.getElementById('loading')
+			const submitBtn = document.getElementById('submitBtn')
+
+			// Default today's date for invoice date and due date
+			const today = new Date()
+			document.getElementById('invoice_date').valueAsDate = today
+			document.getElementById('due_date').valueAsDate = today
+
+			// File upload handling
+			fileInput.addEventListener('change', function () {
+				if (this.files.length > 0) {
+					fileName.textContent = '✓ ' + this.files[0].name
+					fileName.classList.add('show')
+					fileLabel.classList.add('has-file')
+					fileError.textContent = ''
+					fileError.classList.remove('show')
+				}
+			})
+
+			logoInput.addEventListener('change', function () {
+				if (this.files.length > 0) {
+					logoName.textContent = '✓ ' + this.files[0].name
+					logoName.classList.add('show')
+					logoLabel.classList.add('has-file')
+				}
+			})
+
+			// Drag and drop — Excel
+			fileLabel.addEventListener('dragover', e => { e.preventDefault(); fileLabel.style.borderColor = '#38ef7d'; fileLabel.style.background = 'rgba(17,153,142,0.15)' })
+			fileLabel.addEventListener('dragleave', e => { e.preventDefault(); fileLabel.style.borderColor = '#11998e'; fileLabel.style.background = 'rgba(17,153,142,0.05)' })
+			fileLabel.addEventListener('drop', function (e) {
+				e.preventDefault()
+				fileLabel.style.borderColor = '#11998e'
+				fileLabel.style.background = 'rgba(17,153,142,0.05)'
+				if (e.dataTransfer.files.length > 0) {
+					fileInput.files = e.dataTransfer.files
+					fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+				}
+			})
+
+			// Drag and drop — Logo
+			logoLabel.addEventListener('dragover', e => { e.preventDefault(); logoLabel.style.borderColor = '#38ef7d'; logoLabel.style.background = 'rgba(17,153,142,0.15)' })
+			logoLabel.addEventListener('dragleave', e => { e.preventDefault(); logoLabel.style.borderColor = '#11998e'; logoLabel.style.background = 'rgba(17,153,142,0.05)' })
+			logoLabel.addEventListener('drop', function (e) {
+				e.preventDefault()
+				logoLabel.style.borderColor = '#11998e'
+				logoLabel.style.background = 'rgba(17,153,142,0.05)'
+				if (e.dataTransfer.files.length > 0) {
+					logoInput.files = e.dataTransfer.files
+					logoInput.dispatchEvent(new Event('change', { bubbles: true }))
+				}
+			})
+
+			// Form submission
+			form.addEventListener('submit', async function (e) {
+				e.preventDefault()
+
+				if (!fileInput.files || fileInput.files.length === 0) {
+					fileError.textContent = 'Please select an Excel file'
+					fileError.classList.add('show')
+					return
+				}
+
+				const formData = new FormData(form)
+				submitBtn.disabled = true
+				loading.style.display = 'block'
+
+				try {
+					const response = await fetch('/generate-invoice', {
+						method: 'POST',
+						body: formData
+					})
+
+					if (!response.ok) {
+						const error = await response.text()
+						throw new Error(error)
+					}
+
+					const blob = await response.blob()
+					const url = window.URL.createObjectURL(blob)
+					const a = document.createElement('a')
+					a.href = url
+					a.download = `Invoice ${formData.get('invoice_number')}.pdf`
+					document.body.appendChild(a)
+					a.click()
+					window.URL.revokeObjectURL(url)
+					a.remove()
+				} catch (error) {
+					fileError.textContent = 'Error: ' + error.message
+					fileError.classList.add('show')
+				} finally {
+					submitBtn.disabled = false
+					loading.style.display = 'none'
+				}
+			})
+		</script>
+	</body>
+</html>
