@@ -72,8 +72,6 @@ def generate():
         "terms": request.form.get("terms", ""),
         "logo_path": logo_path,
         "show_net_weight": request.form.get("show_net_weight") == "on",
-        "warehouse_receipt": request.form.get("warehouse_receipt", ""),
-        "show_warehouse_receipt": request.form.get("show_warehouse_receipt") == "on",
     })
 
     # Render HTML and generate PDF

@@ -192,15 +192,9 @@
 						<span class="label">DATE</span>
 						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ invoice_date }}
 					</p>
-					{% if show_warehouse_receipt %}
-					<p>
-						<span class="label">WR N°</span>
-						&nbsp;&nbsp;{{ warehouse_receipt }}
-					</p>
-					{% endif %}
 					<p class="label">ORDER INFORMATION</p>
 					<p>Packing:</p>
-					<p style="white-space: pre-wrap;">{{ packing_info }}</p>
+					<p style="white-space: pre-wrap">{{ packing_info }}</p>
 					<p>Net weight: {{ net_weight }}</p>
 					<p>Gross weight: {{ gross_weight }}</p>
 				</div>
@@ -236,7 +230,7 @@
 						<th>LOT N°</th>
 						<th>MANUFACTURE DATE</th>
 						{% if show_net_weight %}
-						<th>UNIT NET WEIGHT (KG)</th>
+						<th>UNIT NET WEIGHT (LBS)</th>
 						{% endif %}
 						<th>QTY</th>
 					</tr>

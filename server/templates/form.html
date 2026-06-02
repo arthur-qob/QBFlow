@@ -62,6 +62,11 @@
 			.form-section h2 {
 				font-size: 18px;
 				color: #333;
+			}
+			.weight-reminder {
+				font-size: 12px;
+				color: red;
+				margin-top: 10px;
 				margin-bottom: 20px;
 				padding-bottom: 10px;
 				border-bottom: 2px solid #f0f0f0;
@@ -361,8 +366,21 @@
 				<p>Fill in the form below to generate your packing slip PDF</p>
 			</div>
 
-			<div style="text-align: right; padding: 10px 40px 0; font-size: 13px;">
-				<a href="/invoice" style="color: #764ba2; text-decoration: none; font-weight: 600;">Switch to Invoice Generator →</a>
+			<div
+				style="
+					text-align: right;
+					padding: 10px 40px 0;
+					font-size: 13px;
+				">
+				<a
+					href="/invoice"
+					style="
+						color: #764ba2;
+						text-decoration: none;
+						font-weight: 600;
+					">
+					Switch to Invoice Generator →
+				</a>
 			</div>
 
 			<form
@@ -619,6 +637,7 @@ CNPJ: 17.958.615/0001-28</textarea
 				<!-- Weight Section -->
 				<div class="form-section">
 					<h2>Weight Information</h2>
+					<h3 class="weight-reminder">WEIGHT ONLY IN LBS!!!</h3>
 					<div class="form-grid">
 						<div class="form-group">
 							<label for="net_weight">Net Weight</label>
@@ -626,7 +645,7 @@ CNPJ: 17.958.615/0001-28</textarea
 								type="text"
 								id="net_weight"
 								name="net_weight"
-								value="9.00 kg"
+								value="9.00 lbs"
 								required />
 						</div>
 						<div class="form-group">
@@ -635,7 +654,7 @@ CNPJ: 17.958.615/0001-28</textarea
 								type="text"
 								id="gross_weight"
 								name="gross_weight"
-								value="10.60 kg"
+								value="10.60 lbs"
 								required />
 						</div>
 					</div>
@@ -658,34 +677,6 @@ CNPJ: 17.958.615/0001-28</textarea
 							for="show_net_weight">
 							Show NET WEIGHT column in items table
 						</span>
-					</div>
-					<div class="toggle-row">
-						<label class="toggle-switch">
-							<input
-								type="checkbox"
-								id="show_warehouse_receipt"
-								name="show_warehouse_receipt" />
-							<span class="toggle-slider"></span>
-						</label>
-						<span
-							class="toggle-label"
-							for="show_warehouse_receipt">
-							Show Warehouse Receipt Number
-						</span>
-					</div>
-					<div
-						class="toggle-extra"
-						id="warehouse_receipt_extra">
-						<div class="form-group">
-							<label for="warehouse_receipt">
-								Warehouse Receipt Number
-							</label>
-							<input
-								type="text"
-								id="warehouse_receipt"
-								name="warehouse_receipt"
-								placeholder="e.g. WR-2026-001" />
-						</div>
 					</div>
 				</div>
 
@@ -714,18 +705,7 @@ CNPJ: 17.958.615/0001-28</textarea
 		</div>
 
 		<script>
-			// Warehouse receipt toggle
-			document
-				.getElementById('show_warehouse_receipt')
-				.addEventListener('change', function () {
-					const extra = document.getElementById(
-						'warehouse_receipt_extra'
-					)
-					extra.classList.toggle('show', this.checked)
-					document.getElementById('warehouse_receipt').value = ''
-				})
-
-			const form = document.getElementById('packingForm')
+const form = document.getElementById('packingForm')
 			const fileInput = document.getElementById('excelFile')
 			const fileLabel = document.getElementById('fileLabel')
 			const fileName = document.getElementById('fileName')
