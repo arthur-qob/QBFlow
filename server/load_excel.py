@@ -23,7 +23,7 @@ def _format_month_year(val):
     if hasattr(val, "strftime"):
         return val.strftime("%m/%Y")
     val_str = str(val).strip()
-    for fmt in ["%m/%Y", "%m-%Y", "%Y-%m", "%b %Y", "%B %Y",
+    for fmt in ["%m/%Y", "%m.%Y", "%m-%Y", "%Y-%m", "%b %Y", "%B %Y",
                 "%m/%d/%Y", "%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"]:
         try:
             return datetime.strptime(val_str, fmt).strftime("%m/%Y")
