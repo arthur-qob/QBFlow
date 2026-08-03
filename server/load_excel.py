@@ -6,12 +6,12 @@ def _format_day_month_year(val):
     if pd.isna(val) or val == "":
         return ""
     if hasattr(val, "strftime"):
-        return val.strftime("%m.%d.%Y")
+        return val.strftime("%m/%d/%Y")
     val_str = str(val).strip()
     for fmt in ["%m/%d/%Y", "%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%m-%d-%Y",
                 "%d.%m.%Y", "%m.%d.%Y", "%B %d, %Y", "%b %d, %Y"]:
         try:
-            return datetime.strptime(val_str, fmt).strftime("%m.%d.%Y")
+            return datetime.strptime(val_str, fmt).strftime("%m/%d/%Y")
         except ValueError:
             pass
     return val_str

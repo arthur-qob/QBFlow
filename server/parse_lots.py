@@ -17,7 +17,7 @@ def parse_lot_cell(value):
       {
         "lot": str,              e.g. "AC2402"
         "qty": int or None,      quantity from parentheses, or None if absent
-        "manufacture_date": str or None,  "MM.YYYY" derived from YYMM, or None
+                "manufacture_date": str or None,  "MM/YYYY" derived from YYMM, or None
       }
 
     Unrecognized entries are returned as-is with qty=None and manufacture_date=None.
@@ -51,7 +51,7 @@ def _derive_date(yy, mm):
         year = 2000 + int(yy)
         month = int(mm)
         if 1 <= month <= 12:
-            return f"{month:02d}.{year}"
+            return f"{month:02d}/{year}"
     except ValueError:
         pass
     return None
