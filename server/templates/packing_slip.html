@@ -215,11 +215,11 @@
 				{% endif %}
 				<div>
 					<p class="label">NET WEIGHT</p>
-					<p>{{ net_weight }}</p>
+					<p>{{ net_weight }} {{ weight_unit|upper }}</p>
 				</div>
 				<div>
 					<p class="label">GROSS WEIGHT</p>
-					<p>{{ gross_weight }}</p>
+					<p>{{ gross_weight }} {{ weight_unit|upper }}</p>
 				</div>
 			</section>
 
@@ -230,7 +230,7 @@
 						<th>LOT N°</th>
 						<th>MANUFACTURE DATE</th>
 						{% if show_net_weight %}
-						<th>UNIT NET WEIGHT (LBS)</th>
+						<th>UNIT NET WEIGHT ({{ weight_unit|upper }})</th>
 						{% endif %}
 						<th>QTY</th>
 					</tr>

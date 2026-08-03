@@ -628,7 +628,7 @@ CNPJ: 17.958.615/0001-28</textarea
 									type="radio"
 									name="date_format"
 									value="month_year" />
-								<span>Month / Year only</span>
+								<span>Month / Year only (mm/yyyy)</span>
 							</label>
 						</div>
 					</div>
@@ -637,7 +637,6 @@ CNPJ: 17.958.615/0001-28</textarea
 				<!-- Weight Section -->
 				<div class="form-section">
 					<h2>Weight Information</h2>
-					<h3 class="weight-reminder">WEIGHT ONLY IN LBS!!!</h3>
 					<div class="form-grid">
 						<div class="form-group">
 							<label for="net_weight">Net Weight</label>
@@ -645,7 +644,7 @@ CNPJ: 17.958.615/0001-28</textarea
 								type="text"
 								id="net_weight"
 								name="net_weight"
-								value="9.00 lbs"
+								value="9.00"
 								required />
 						</div>
 						<div class="form-group">
@@ -654,8 +653,22 @@ CNPJ: 17.958.615/0001-28</textarea
 								type="text"
 								id="gross_weight"
 								name="gross_weight"
-								value="10.60 lbs"
+								value="10.60"
 								required />
+						</div>
+						<div class="form-group">
+							<label for="weight_unit">Weight Unit</label>
+							<select
+								id="weight_unit"
+								name="weight_unit"
+								required>
+								<option
+									value="lbs"
+									selected>
+									LBS
+								</option>
+								<option value="kg">KG</option>
+							</select>
 						</div>
 					</div>
 				</div>
@@ -705,7 +718,7 @@ CNPJ: 17.958.615/0001-28</textarea
 		</div>
 
 		<script>
-const form = document.getElementById('packingForm')
+			const form = document.getElementById('packingForm')
 			const fileInput = document.getElementById('excelFile')
 			const fileLabel = document.getElementById('fileLabel')
 			const fileName = document.getElementById('fileName')

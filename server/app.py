@@ -68,6 +68,7 @@ def generate():
         "packing_info": request.form.get("packing_info", ""),
         "net_weight": request.form.get("net_weight", ""),
         "gross_weight": request.form.get("gross_weight", ""),
+        "weight_unit": request.form.get("weight_unit", "lbs"),
         "incoterm": request.form.get("incoterm", "CPT"),
         "terms": request.form.get("terms", ""),
         "logo_path": logo_path,

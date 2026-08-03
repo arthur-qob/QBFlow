@@ -21,12 +21,12 @@ def _format_month_year(val):
     if pd.isna(val) or val == "":
         return ""
     if hasattr(val, "strftime"):
-        return val.strftime("%m.%Y")
+        return val.strftime("%m/%Y")
     val_str = str(val).strip()
     for fmt in ["%m/%Y", "%m-%Y", "%Y-%m", "%b %Y", "%B %Y",
                 "%m/%d/%Y", "%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"]:
         try:
-            return datetime.strptime(val_str, fmt).strftime("%m.%Y")
+            return datetime.strptime(val_str, fmt).strftime("%m/%Y")
         except ValueError:
             pass
     return val_str
