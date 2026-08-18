@@ -46,12 +46,20 @@ def load_excel(path, date_format="day_month_year"):
 
     df["reference"] = df["reference"].astype(str).str.replace(r'\.0$', '', regex=True)
 
-    if date_format == "month_year":
-        df["manufacture_dates"] = df["manufacture_dates"].apply(_format_month_year)
+    # manufacture_dates is optional — create empty column if absent
+    if "manufacture_dates" in df.columns:
+        if date_format == "month_year":
+            df["manufacture_dates"] = df["manufacture_dates"].apply(_format_month_year)
+        else:
+            df["manufacture_dates"] = df["manufacture_dates"].apply(_format_day_month_year)
     else:
-        df["manufacture_dates"] = df["manufacture_dates"].apply(_format_day_month_year)
+        df["manufacture_dates"] = ""
 
-    df["qty"] = df["qty"].astype(int)
+    # qty is optional — keep as nullable float so NaN rows can be derived from lot
+    if "qty" in df.columns:
+        df["qty"] = pd.to_numeric(df["qty"], errors="coerce")
+    else:
+        df["qty"] = None
 
     if "NET WEIGHT" in df.columns:
         df = df.rename(columns={"NET WEIGHT": "net_weight_per_item"})
