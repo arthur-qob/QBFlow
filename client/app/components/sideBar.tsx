@@ -4,19 +4,26 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import MenuButton from './menuButton'
 import ThemeToggler from './themeToggler'
-import { Box, File, FileStackIcon, ScanTextIcon, Upload } from 'lucide-react'
+import {
+	Box,
+	Factory,
+	File,
+	FileStackIcon,
+	FileText,
+	ScanTextIcon,
+	ShoppingCart,
+	Upload,
+	Users
+} from 'lucide-react'
 import Link from 'next/link'
 
 const NAV_ITEMS = [
 	{ icon: File, label: 'Document Generator', path: '/document-generator' },
-	{ icon: Upload, label: 'Document Upload', path: '/document-upload' },
-	{
-		icon: ScanTextIcon,
-		label: 'Document Scanner',
-		path: '/document-scanner'
-	},
-	{ icon: FileStackIcon, label: 'Orders', path: '/orders' },
-	{ icon: Box, label: 'Inventory', path: '/inventory' }
+	{ icon: ScanTextIcon, label: 'PDF Converter', path: '/document-scanner' },
+	{ icon: FileText, label: 'Clients', path: '/clients' },
+	{ icon: Factory, label: 'Vendors', path: '/vendors' },
+	{ icon: ShoppingCart, label: 'Buyers', path: '/buyers' },
+	{ icon: Users, label: 'Users', path: '/users' }
 ]
 
 const SideBar = () => {
@@ -33,7 +40,7 @@ const SideBar = () => {
 			/>
 			<motion.nav
 				aria-label='Main navigation'
-				animate={{ width: isOpen ? 256 : 64 }}
+				animate={{ width: isOpen ? 256 : 70 }}
 				transition={{ duration: 0.3, ease: 'easeInOut' }}
 				className='fixed left-0 top-0 z-20 h-full bg-primary text-foreground shadow-md p-4 flex flex-col gap-4 overflow-hidden'
 				onClick={(event) => event.stopPropagation()}>

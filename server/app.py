@@ -1,16 +1,42 @@
 import io
 import os
+import base64
+import json
+import queue
+import threading
 import tempfile
 from datetime import datetime
-from flask import Flask, request, send_file, jsonify, render_template
+
+from dotenv import load_dotenv
+load_dotenv()
+
+from flask import Flask, request, send_file, jsonify, render_template, Response, stream_with_context
+from flask_cors import CORS
+
 from load_excel import load_excel
 from prep_data import prepare_data
 from load_invoice_excel import load_invoice_excel
 from prep_invoice_data import prepare_invoice_data
 from render_html import render_html
 from generate import generate_pdf
+from extract_pdf import extract_items_from_invoice, dataframe_to_excel_bytes
+
+# API blueprints
+from api.entity_crud import clients_bp, vendors_bp, buyers_bp
+from api.users import users_bp
+from api.documents import documents_bp
+from api.auth import auth_bp
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Register blueprints
+for bp in (clients_bp, vendors_bp, buyers_bp, users_bp, documents_bp, auth_bp):
+    app.register_blueprint(bp)
+
+# In-memory store for PDF extraction jobs
+_pdf_jobs: dict = {}
+_pdf_jobs_lock = threading.Lock()
 
 
 def _format_invoice_date(date_str):
@@ -21,39 +47,73 @@ def _format_invoice_date(date_str):
         return date_str
 
 
+def _save_logo(logo_file=None, logo_b64: str = None, prefix: str = "logo") -> str | None:
+    """
+    Persist a logo to a temp file and return the path.
+    Accepts either a file-like upload object or a base64 string.
+    Returns None if nothing was provided.
+    """
+    if logo_file and logo_file.filename:
+        ext = os.path.splitext(logo_file.filename)[1]
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
+        logo_file.save(tmp.name)
+        tmp.close()
+        return tmp.name
+
+    if logo_b64:
+        # Strip possible data-URL prefix
+        if "," in logo_b64:
+            logo_b64 = logo_b64.split(",", 1)[1]
+        try:
+            raw = base64.b64decode(logo_b64)
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png", prefix=prefix)
+            tmp.write(raw)
+            tmp.close()
+            return tmp.name
+        except Exception:
+            pass
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Legacy template routes (kept for backwards-compat / direct browser access)
+# ---------------------------------------------------------------------------
+
 @app.route("/", methods=["GET"])
 def index():
     return render_template("form.html")
 
 
+@app.route("/invoice", methods=["GET"])
+def invoice_form():
+    return render_template("invoice_form.html")
+
+
+# ---------------------------------------------------------------------------
+# PDF Generation endpoints
+# ---------------------------------------------------------------------------
+
 @app.route("/generate", methods=["POST"])
 def generate():
-    # Check file
     if "excel_file" not in request.files:
         return "No file provided", 400
 
     file = request.files["excel_file"]
-
     if not file.filename.lower().endswith((".xlsx", ".xls")):
         return "File must be an Excel file (.xlsx or .xls)", 400
 
-    # Load and prepare data
     date_format = request.form.get("date_format", "day_month_year")
     df = load_excel(file, date_format=date_format)
     data = prepare_data(df)
 
-    # Handle logo upload if provided
-    logo_path = None
-    if "logo_file" in request.files:
-        logo_file = request.files["logo_file"]
-        if logo_file and logo_file.filename:
-            # Save logo to a temporary location
-            temp_dir = tempfile.gettempdir()
-            logo_filename = f"packing_slip_logo_{os.urandom(4).hex()}{os.path.splitext(logo_file.filename)[1]}"
-            logo_path = os.path.join(temp_dir, logo_filename)
-            logo_file.save(logo_path)
+    # Logo: prefer uploaded file, fallback to base64 from client record
+    logo_path = _save_logo(
+        logo_file=request.files.get("logo_file"),
+        logo_b64=request.form.get("logo_b64", ""),
+        prefix="packing_slip_logo_",
+    )
 
-    # Add header data from form
     data.update({
         "company_name": request.form.get("company_name", "TECHNICARE USA LLC"),
         "company_address": request.form.get("company_address", "2350 NW 93rd Ave"),
@@ -73,17 +133,16 @@ def generate():
         "terms": request.form.get("terms", ""),
         "logo_path": logo_path,
         "show_net_weight": request.form.get("show_net_weight") == "on",
+        "accent_color": request.form.get("accent_color", "#4a5080"),
     })
 
-    # Render HTML and generate PDF
     html = render_html(data)
     pdf_bytes = generate_pdf(html)
 
-    # Clean up logo file if it was uploaded
     if logo_path and os.path.exists(logo_path):
         try:
             os.remove(logo_path)
-        except:
+        except OSError:
             pass
 
     return send_file(
@@ -93,14 +152,8 @@ def generate():
     )
 
 
-@app.route("/invoice", methods=["GET"])
-def invoice_form():
-    return render_template("invoice_form.html")
-
-
 @app.route("/generate-invoice", methods=["POST"])
 def generate_invoice():
-    # Validate file
     if "excel_file" not in request.files:
         return "No file provided", 400
 
@@ -108,22 +161,16 @@ def generate_invoice():
     if not file.filename.lower().endswith((".xlsx", ".xls")):
         return "File must be an Excel file (.xlsx or .xls)", 400
 
-    # Load and prepare data
     df = load_invoice_excel(file)
     shipping = float(request.form.get("shipping_cost", 0) or 0)
     data = prepare_invoice_data(df, shipping=shipping)
 
-    # Handle logo upload
-    logo_path = None
-    if "logo_file" in request.files:
-        logo_file = request.files["logo_file"]
-        if logo_file and logo_file.filename:
-            temp_dir = tempfile.gettempdir()
-            logo_filename = f"invoice_logo_{os.urandom(4).hex()}{os.path.splitext(logo_file.filename)[1]}"
-            logo_path = os.path.join(temp_dir, logo_filename)
-            logo_file.save(logo_path)
+    logo_path = _save_logo(
+        logo_file=request.files.get("logo_file"),
+        logo_b64=request.form.get("logo_b64", ""),
+        prefix="invoice_logo_",
+    )
 
-    # Merge form fields
     data.update({
         "company_name": request.form.get("company_name", "TECHNICARE USA LLC"),
         "company_address": request.form.get("company_address", "2350 NW 93rd Ave"),
@@ -141,17 +188,16 @@ def generate_invoice():
         "currency": request.form.get("currency", "USD"),
         "payment_info": request.form.get("payment_info", ""),
         "logo_path": logo_path,
+        "accent_color": request.form.get("accent_color", "#4a5080"),
     })
 
-    # Render HTML and generate PDF
     html = render_html(data, template_name="invoice.html")
     pdf_bytes = generate_pdf(html)
 
-    # Clean up temp logo
     if logo_path and os.path.exists(logo_path):
         try:
             os.remove(logo_path)
-        except Exception:
+        except OSError:
             pass
 
     invoice_number = data["invoice_number"]
@@ -162,9 +208,135 @@ def generate_invoice():
     )
 
 
+# ---------------------------------------------------------------------------
+# Health
+# ---------------------------------------------------------------------------
+
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok"})
+    from firebase_admin_init import is_available
+    return jsonify({"status": "ok", "firestore": is_available()})
+
+
+# ---------------------------------------------------------------------------
+# PDF → Excel extraction (SSE streaming)
+# ---------------------------------------------------------------------------
+
+@app.route("/extract-pdf/start", methods=["POST"])
+def extract_pdf_start():
+    if "invoice_file" not in request.files:
+        return jsonify({"error": "No invoice file provided"}), 400
+
+    invoice_file = request.files["invoice_file"]
+    if not invoice_file.filename.lower().endswith(".pdf"):
+        return jsonify({"error": "Invoice file must be a PDF"}), 400
+
+    invoice_tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    invoice_file.save(invoice_tmp.name)
+    invoice_tmp.close()
+
+    cert_tmp_path = None
+    if "certificate_file" in request.files:
+        cert_file = request.files["certificate_file"]
+        if cert_file and cert_file.filename.lower().endswith(".pdf"):
+            cert_tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+            cert_file.save(cert_tmp.name)
+            cert_tmp.close()
+            cert_tmp_path = cert_tmp.name
+
+    job_id = os.urandom(8).hex()
+    job_queue: queue.Queue = queue.Queue()
+
+    with _pdf_jobs_lock:
+        _pdf_jobs[job_id] = {"queue": job_queue, "result": None, "error": None}
+
+    def _run():
+        try:
+            def _progress(current, total, message):
+                pct = int((current / total) * 100) if total > 0 else 0
+                job_queue.put({"current": current, "total": total, "percentage": pct, "message": message})
+
+            df = extract_items_from_invoice(
+                invoice_tmp.name,
+                certificate_file=cert_tmp_path,
+                progress_cb=_progress,
+            )
+
+            if df is None or df.empty:
+                job_queue.put({"error": "No data extracted from PDF"})
+                with _pdf_jobs_lock:
+                    _pdf_jobs[job_id]["error"] = "No data extracted from PDF"
+            else:
+                excel_bytes = dataframe_to_excel_bytes(df)
+                with _pdf_jobs_lock:
+                    _pdf_jobs[job_id]["result"] = excel_bytes
+                job_queue.put({"done": True, "rowCount": len(df)})
+
+        except Exception as exc:
+            job_queue.put({"error": str(exc)})
+            with _pdf_jobs_lock:
+                _pdf_jobs[job_id]["error"] = str(exc)
+        finally:
+            try:
+                os.remove(invoice_tmp.name)
+            except OSError:
+                pass
+            if cert_tmp_path:
+                try:
+                    os.remove(cert_tmp_path)
+                except OSError:
+                    pass
+
+    threading.Thread(target=_run, daemon=True).start()
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/extract-pdf/stream/<job_id>", methods=["GET"])
+def extract_pdf_stream(job_id):
+    with _pdf_jobs_lock:
+        job = _pdf_jobs.get(job_id)
+
+    if job is None:
+        return jsonify({"error": "Job not found"}), 404
+
+    def _generate():
+        job_queue = job["queue"]
+        while True:
+            try:
+                msg = job_queue.get(timeout=60)
+            except queue.Empty:
+                yield 'data: {"error": "Timeout waiting for processing"}\n\n'
+                break
+            yield f"data: {json.dumps(msg)}\n\n"
+            if "done" in msg or "error" in msg:
+                break
+
+    return Response(
+        stream_with_context(_generate()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.route("/extract-pdf/result/<job_id>", methods=["GET"])
+def extract_pdf_result(job_id):
+    with _pdf_jobs_lock:
+        job = _pdf_jobs.pop(job_id, None)
+
+    if job is None:
+        return jsonify({"error": "Job not found or already downloaded"}), 404
+    if job.get("error"):
+        return jsonify({"error": job["error"]}), 500
+    result = job.get("result")
+    if result is None:
+        return jsonify({"error": "Job not complete yet"}), 202
+
+    return send_file(
+        io.BytesIO(result),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        download_name="extracted_data.xlsx",
+        as_attachment=True,
+    )
 
 
 if __name__ == "__main__":

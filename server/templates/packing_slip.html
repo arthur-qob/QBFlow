@@ -2,6 +2,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<style>
+			:root { --accent: {{ accent_color | default('#4a5080') }}; }
 			@page {
 				margin: 15mm 12mm;
 			}
@@ -101,7 +102,7 @@
 			}
 
 			.items-table thead tr {
-				background-color: #d9dce6;
+				background-color: var(--accent);
 			}
 
 			.items-table th,
@@ -114,7 +115,7 @@
 				padding: 10px 12px;
 				font-weight: 600;
 				font-size: 12px;
-				color: #4a5080;
+				color: #fff;
 				letter-spacing: 0.03em;
 			}
 
