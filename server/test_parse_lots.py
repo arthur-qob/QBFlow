@@ -46,9 +46,20 @@ def test_none_value():
     ]
 
 
-def test_lowercase_is_normalized():
-    assert parse_lot_cell("ac2402(4)") == [
-        {"lot": "AC2402", "qty": 4, "manufacture_date": "02/2024"},
+def test_lowercase_preserves_case():
+    # Lot codes are stored as-is (case-sensitive); ac2402 ≠ AC2402
+    result = parse_lot_cell("ac2402(4)")
+    assert result == [
+        {"lot": "ac2402", "qty": 4, "manufacture_date": "02/2024"},
+    ]
+
+
+def test_flexible_lot_format():
+    # Real-world format: alphanumeric codes with qty in parens, dates from sheet
+    result = parse_lot_cell("b3r(2); b5S(13)")
+    assert result == [
+        {"lot": "b3r", "qty": 2, "manufacture_date": None},
+        {"lot": "b5S", "qty": 13, "manufacture_date": None},
     ]
 
 

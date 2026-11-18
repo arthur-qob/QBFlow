@@ -196,8 +196,8 @@
 					<p class="label">ORDER INFORMATION</p>
 					<p>Packing:</p>
 					<p style="white-space: pre-wrap">{{ packing_info }}</p>
-					<p>Net weight: {{ net_weight }}</p>
-					<p>Gross weight: {{ gross_weight }}</p>
+					<p>Net weight: {{ net_weight }} {{ weight_unit }}</p>
+					<p>Gross weight: {{ gross_weight }} {{ weight_unit }}</p>
 				</div>
 			</section>
 
@@ -216,11 +216,11 @@
 				{% endif %}
 				<div>
 					<p class="label">NET WEIGHT</p>
-					<p>{{ net_weight }} {{ weight_unit|upper }}</p>
+					<p>{{ net_weight }} {{ weight_unit }}</p>
 				</div>
 				<div>
 					<p class="label">GROSS WEIGHT</p>
-					<p>{{ gross_weight }} {{ weight_unit|upper }}</p>
+					<p>{{ gross_weight }} {{ weight_unit }}</p>
 				</div>
 			</section>
 

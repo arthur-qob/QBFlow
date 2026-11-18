@@ -33,16 +33,27 @@ def prepare_data(df):
             lot_lines = []
             date_lines = []
             sheet_date = row_dict.get("manufacture_dates", "")
-            for entry in parsed:
+
+            # Split sheet dates by semicolon so each lot gets its own date line
+            if not _is_empty(sheet_date):
+                sheet_date_parts = [d.strip() for d in str(sheet_date).split(";")]
+            else:
+                sheet_date_parts = []
+
+            for i, entry in enumerate(parsed):
                 lot_lines.append(
                     f"{entry['lot']} x{entry['qty']}" if entry["qty"] is not None else entry["lot"]
                 )
-                # Sheet date takes priority; fall back to lot-derived date when empty
-                date_lines.append(
-                    sheet_date if not _is_empty(sheet_date)
-                    else entry["manufacture_date"] if entry["manufacture_date"] is not None
-                    else ""
-                )
+                # Pick the matching sheet date by index; fall back to lot-derived date, then ""
+                if sheet_date_parts:
+                    date_lines.append(
+                        sheet_date_parts[i] if i < len(sheet_date_parts) else sheet_date_parts[-1]
+                    )
+                elif entry["manufacture_date"] is not None:
+                    date_lines.append(entry["manufacture_date"])
+                else:
+                    date_lines.append("")
+
             r = dict(row_dict)
             r["lots"] = "\n".join(lot_lines)
             r["manufacture_dates"] = "\n".join(date_lines)

@@ -1,26 +1,29 @@
 import re
 
-_ENTRY_PATTERN = re.compile(r'^([A-Za-z]{2})(\d{2})(\d{2})\s*(?:\((\d+)\))?$')
+# Matches: any alphanumeric lot code followed by optional (qty), e.g. "b3r(2)", "aDN(24)", "AC2402(4)"
+_FLEXIBLE_PATTERN = re.compile(r'^([A-Za-z0-9]+)\s*(?:\((\d+)\))?$')
+
+# Matches the strict original format: 2 letters + 2-digit year + 2-digit month + optional (qty)
+# Used only to derive manufacture_date from the lot code itself
+_DERIVE_PATTERN = re.compile(r'^([A-Za-z]{2})(\d{2})(\d{2})$')
 
 
 def parse_lot_cell(value):
     """
     Parse a lot cell into a list of entries.
 
-    Recognized format: XXYYMM(qty) separated by semicolons, e.g. "AC2402(4); AC2410(1)"
-      - XX   = 2 letters
-      - YY   = 2-digit year
-      - MM   = 2-digit month
-      - (qty) = optional quantity in parentheses
+    Supported formats (semicolon-separated):
+      - "b3r(2); b5S(13)"          — alphanumeric code + qty in parens
+      - "AC2402(4); AC2410(1)"     — 2-letter + YYMM code (manufacture date auto-derived)
+      - "b78(50)"                  — single entry
+      - bare codes without qty     — qty=None
 
     Returns a list of dicts:
       {
-        "lot": str,              e.g. "AC2402"
-        "qty": int or None,      quantity from parentheses, or None if absent
-                "manufacture_date": str or None,  "MM/YYYY" derived from YYMM, or None
+        "lot": str,                 lot code without parentheses, e.g. "b3r"
+        "qty": int or None,         quantity from parentheses, or None if absent
+        "manufacture_date": str or None,  "MM/YYYY" derived from YYMM codes, or None
       }
-
-    Unrecognized entries are returned as-is with qty=None and manufacture_date=None.
     """
     if value is None or (isinstance(value, float) and value != value):
         return [{"lot": "", "qty": None, "manufacture_date": None}]
@@ -34,16 +37,25 @@ def parse_lot_cell(value):
         part = part.strip()
         if not part:
             continue
-        m = _ENTRY_PATTERN.match(part)
+        m = _FLEXIBLE_PATTERN.match(part)
         if m:
-            lot = (m.group(1) + m.group(2) + m.group(3)).upper()
-            qty = int(m.group(4)) if m.group(4) is not None else None
-            manufacture_date = _derive_date(m.group(2), m.group(3))
+            lot = m.group(1)
+            qty = int(m.group(2)) if m.group(2) is not None else None
+            # Try to derive manufacture_date if the lot code looks like XXYYMM
+            manufacture_date = _try_derive_date(lot)
             results.append({"lot": lot, "qty": qty, "manufacture_date": manufacture_date})
         else:
             results.append({"lot": part, "qty": None, "manufacture_date": None})
 
     return results if results else [{"lot": value, "qty": None, "manufacture_date": None}]
+
+
+def _try_derive_date(lot_code):
+    """Derive MM/YYYY from a lot code that matches the XXYYMM pattern."""
+    m = _DERIVE_PATTERN.match(lot_code)
+    if m:
+        return _derive_date(m.group(2), m.group(3))
+    return None
 
 
 def _derive_date(yy, mm):
